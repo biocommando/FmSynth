@@ -1,0 +1,56 @@
+{
+    "_env": {
+        "_groupName": "envelope",
+        "attack": "A",
+        "decay": "D",
+        "sustain": "S",
+        "release": "R"
+    },
+    "_routing": {
+        "_groupName": "routing",
+        "route to output": "out",
+        "route to osc1": "o1",
+        "route to osc2": "o2",
+        "route to osc3": "o3",
+        "route to osc4": "o4"
+    },
+    "_fm": {
+        "_groupName": "fm parameters",
+        "ratio nominator": "rt1",
+        "ratio divider": "rt2",
+        "waveform": "wav",
+        "velocity sensitivity": "vel"
+    },
+    "_osc" : {
+        "_groupName": "oscillator",
+        "fm" : {
+            "_fullName": "fm parameters",
+            "_group": "_fm"
+        },
+        "M": {
+            "_fullName": "modulation routing",
+            "_group": "_routing"
+        },
+        "env": {
+            "_fullName": "envelope",
+            "_group": "_env"
+        }
+    },
+    "o1": {
+        "_fullName": "osc 1",
+        "_group": "_osc"
+    },
+    "o2": {
+        "_fullName": "osc 2",
+        "_group": "_osc"
+    },
+    "o3": {
+        "_fullName": "osc 3",
+        "_group": "_osc"
+    },
+    "o4": {
+        "_fullName": "osc 4",
+        "_group": "_osc"
+    },
+    "reservedIds": []
+}

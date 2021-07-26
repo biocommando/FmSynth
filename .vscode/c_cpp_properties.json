@@ -1,0 +1,33 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "D:\\VST3 SDK\\pluginterfaces\\vst2.x/**",
+                "D:\\VST3 SDK\\public.sdk\\source\\vst2.x/**",
+                "D:\\VST3 SDK\\vstgui.sf\\vstgui/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.17763.0",
+            "compilerPath": "C:/Program Files/mingw-w64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64/bin/g++.exe",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64",
+            "compilerArgs": [],
+            "cStandard": "c99",
+            "browse": {
+                "path": [
+                    "D:\\VST3 SDK\\pluginterfaces\\vst2.x/**",
+                    "D:\\VST3 SDK\\public.sdk\\source\\vst2.x/**",
+                    "D:\\VST3 SDK\\vstgui.sf\\vstgui/**",
+                    "${workspaceFolder}"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        }
+    ],
+    "version": 4
+}
