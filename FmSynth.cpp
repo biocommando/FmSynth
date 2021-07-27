@@ -224,12 +224,12 @@ void FmSynth::getParameterLabel(VstInt32 index, char *label)
 
 bool FmSynth::getEffectName(char *name)
 {
-    strcpy_s(name, 32, "4 OP Free FM Synth");
+    strcpy_s(name, 32, "Complex Kookaburra");
     return true;
 }
 bool FmSynth::getProductString(char *text)
 {
-    strcpy_s(text, 64, "4 OP Free FM Synth");
+    strcpy_s(text, 64, "Complex Kookaburra - 4 OP non-fixed architecture FM synth");
     return true;
 }
 bool FmSynth::getVendorString(char *text)
@@ -409,7 +409,7 @@ std::string PresetManager::readProgram(int number)
 void PresetManager::saveProgram(int number, const std::string &name)
 {
     curProgramName = name;
-    std::string presetTmpFileName = std::string(workDir) + "\\" + "TranSynPresets.tmp";
+    std::string presetTmpFileName = std::string(workDir) + "\\" + "FmSynthPresets.tmp";
     FILE *tmp = fopen(presetTmpFileName.c_str(), "w");
 
     openFile(0);

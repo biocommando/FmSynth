@@ -178,7 +178,7 @@ public:
 
         xframe->setBackgroundColor(cBg);
         
-        ADD_TEXT("Complex Kookaburra -- 4 OP non-fixed FM Synth", 0, -0.375, GRID_SIZE * 14, TEXT_H, );
+        ADD_TEXT("Complex Kookaburra -- 4 OP non-fixed architecture FM Synth", 0, -0.375, GRID_SIZE * 14, TEXT_H, );
 
         knobs.clear();
 

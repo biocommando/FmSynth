@@ -1,6 +1,5 @@
 #pragma once
 
-#include "AbstractVoice.h"
 #include "AdsrEnvelope.h"
 #include "common.h"
 #include "DcFilter.h"
