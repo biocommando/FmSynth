@@ -2,7 +2,7 @@
 
 #include "AdsrEnvelope.h"
 #include "common.h"
-#include "LowpassFilter.h"
+#include "Filter.h"
 #include <math.h>
 
 constexpr float pi = 3.14159265358979323846f;

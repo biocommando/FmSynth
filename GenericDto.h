@@ -44,21 +44,22 @@ public:
     static GenericDto deserialize(const std::string &serialized)
     {
         GenericDto d;
+        const auto headerSz = 1 + 2 * sizeof(int);
 
-        if (serialized.size() >= 1 + 2 * sizeof(int))
+        if (serialized.size() >= headerSz)
         {
             d.type = serialized[0] - '0';
             int len = 0;
             memcpy(&len, serialized.substr(1).c_str(), sizeof(int));
             d.byteLength = len;
             memcpy(&d.id, serialized.substr(1 + sizeof(int)).c_str(), sizeof(int));
-
-            auto val = serialized.substr(1 + 2 * sizeof(int));
-            if (val.size() < len)
+            if (serialized.size() < len)
             {
                 d.type = 0;
                 return d;
             }
+
+            auto val = serialized.substr(headerSz, len - headerSz);
             if (d.type == 1)
             {
                 memcpy(&d.iValue, val.c_str(), sizeof(int));
@@ -69,7 +70,7 @@ public:
             }
             else if (d.type == 3)
             {
-                d.sValue = val.substr(0, len - 1 - 2 * sizeof(int));
+                d.sValue = val.substr(0, len - headerSz);
             }
             else
             {
@@ -86,7 +87,7 @@ public:
     {
         if (!isValid())
         {
-            return "0";
+            return "";
         }
         std::string payload;
         if (type == 1)

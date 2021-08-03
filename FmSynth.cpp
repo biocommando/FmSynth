@@ -64,9 +64,9 @@ VstInt32 FmSynth::getChunk(void **data, bool isPreset)
         s += dto.serialize();
     }
     chunk = (char *)malloc(s.size() + 1);
-    memcpy(chunk, s.c_str(), s.size() + 1);
     if (chunk)
     {
+        memcpy(chunk, s.c_str(), s.size() + 1);
         *data = chunk;
         return s.size() + 1;
     }
@@ -88,7 +88,7 @@ VstInt32 FmSynth::setChunk(void *data, VstInt32 byteSize, bool isPreset)
         {
             // reserved ids, pass
         }
-        if (dto.id == 2)
+        else if (dto.id == 2)
         {
             presetManager.setProgramName(dto.sValue);
             
