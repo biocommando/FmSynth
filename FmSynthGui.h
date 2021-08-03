@@ -194,9 +194,9 @@ public:
             }
         }
 
-        ADD_TEXT(getNameForParam(idx_filter, true), 6, 13.35, GRID_SIZE, TEXT_H, label->setHoriAlign(kLeftText));
+        ADD_TEXT(getNameForParam(idx_filter, true), 6, 13.35, GRID_SIZE, TEXT_H, );
         addKnob(xframe, 7, 13, idx_filter, tagParam);
-        ADD_TEXT(getNameForParam(idx_filter_type, true), 8, 13.35, GRID_SIZE, TEXT_H, label->setHoriAlign(kLeftText));
+        ADD_TEXT(getNameForParam(idx_filter_type, true), 8, 13.35, GRID_SIZE, TEXT_H, );
         addKnob(xframe, 9, 13, idx_filter_type, tagParam);
 
         GRID_RECT(presetNameEditRect, 0, 13, GRID_SIZE * 6, TEXT_H * 1.5);
