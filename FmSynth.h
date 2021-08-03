@@ -2,54 +2,9 @@
 #include "audioeffectx.h"
 #include "FmVoice.h"
 #include "common.h"
+#include "Parameter.h"
+#include "PresetManager.h"
 #include <memory>
-
-class Parameter
-{
-public:
-    float value;
-    int id;
-    Parameter(int id, float value = 0) : value(value), id(id) {}
-
-    const char *getShortName() { return getNameForParam(id, false); }
-
-    const char *getFullName() { return getNameForParam(id, true); }
-};
-
-
-class PresetManager
-{
-private:
-    std::vector<Parameter> &parameterHolder;
-    std::string fileName;
-    FILE *f = nullptr;
-    std::string curProgramName;
-    void init();
-    void openFile(int rw);
-    void closeFile();
-    bool readProgram(int number, std::string &name, bool readNameOnly, FILE *copyToTmp = nullptr);
-
-public:
-    std::vector<std::string> presetNames;
-
-    PresetManager(std::vector<Parameter> &h, const std::string &file = "FmSynthPresets.dat") : parameterHolder(h), fileName(file)
-    {
-        init();
-    }
-
-    std::string readProgram(int number);
-
-    void saveProgram(int number, const std::string &name);
-
-    void refresh()
-    {
-        init();
-    }
-
-    void setProgramName(const std::string &name) { curProgramName = name; }
-
-    std::string getProgramName() { return curProgramName; }
-};
 
 class FmSynth : public AudioEffectX
 {
@@ -79,8 +34,6 @@ public:
     VstInt32 processEvents(VstEvents *events);
     void open();
 
-    int getParameterIndexById(int id);
-    int getParameterIdByIndex(int index);
     PresetManager *getPresetManager() { return &presetManager; }
     void updateParameters(int num = -1);
 };

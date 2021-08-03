@@ -4,39 +4,6 @@
 #include "GenericDto.h"
 #include "build.h"
 #include "FmSynthGui.h"
-#include <windows.h>
-
-std::string workDir;
-void resolveWorkDir()
-{
-    if (workDir != "")
-        return;
-    // work out the resource directory
-    // first we get the DLL path from windows API
-    extern void *hInstance;
-    wchar_t workDirWc[1024];
-    GetModuleFileName((HMODULE)hInstance, workDirWc, 1024);
-    char workDirC[1024];
-    wcstombs(workDirC, workDirWc, 1024);
-
-    workDir.assign(workDirC);
-
-    // let's get rid of the DLL file name
-    auto posBslash = workDir.find_last_of('\\');
-    if (posBslash != std::string::npos)
-    {
-        workDir = workDir.substr(0, posBslash);
-    }
-
-    // Let's find out the actual directory we want to work in
-    auto workDirSpec = workDir + "\\FmSynthWorkDir.txt";
-    std::ifstream f;
-    f.open(workDirSpec);
-    std::getline(f, workDirSpec);
-    f.close();
-    if (workDirSpec != "")
-        workDir = workDirSpec;
-}
 
 std::ofstream *getLogger()
 {
@@ -58,7 +25,6 @@ AudioEffect *createEffectInstance(audioMasterCallback audioMaster)
 FmSynth::FmSynth(audioMasterCallback audioMaster)
     : AudioEffectX(audioMaster, 0, total_number_of_parameters), presetManager(parameters)
 {
-    resolveWorkDir();
     setNumInputs(2);        // stereo in
     setNumOutputs(2);       // stereo out
     setUniqueID(670839338); // identify
@@ -86,15 +52,15 @@ VstInt32 FmSynth::getChunk(void **data, bool isPreset)
         free(chunk);
         chunk = nullptr;
     }
-    auto version = GenericDto::createInt(0, 1000);
+    auto version = GenericDto::createInt(0, 0);
 
     std::string s = version.serialize();
-    s += GenericDto::createString(BUILD_DATE, 1001).serialize();
-    s += GenericDto::createString(presetManager.getProgramName(), 1002).serialize();
+    s += GenericDto::createString(BUILD_DATE, 1).serialize();
+    s += GenericDto::createString(presetManager.getProgramName(), 2).serialize();
     for (int i = 0; i < parameters.size(); i++)
     {
         auto param = &parameters[i];
-        auto dto = GenericDto::createFloat(param->value, param->id);
+        auto dto = GenericDto::createFloat(param->value, param->getId());
         s += dto.serialize();
     }
     chunk = (char *)malloc(s.size() + 1);
@@ -118,18 +84,11 @@ VstInt32 FmSynth::setChunk(void *data, VstInt32 byteSize, bool isPreset)
         {
             break;
         }
-        if (dto.id < 1000)
+        if (dto.id == 0 || dto.id == 1)
         {
-            for (int i = 0; i < parameters.size(); i++)
-            {
-                if (parameters[i].id == dto.id)
-                {
-                    parameters[i].value = dto.fValue;
-                    break;
-                }
-            }
+            // reserved ids, pass
         }
-        else if (dto.id == 1002)
+        if (dto.id == 2)
         {
             presetManager.setProgramName(dto.sValue);
             
@@ -138,6 +97,17 @@ VstInt32 FmSynth::setChunk(void *data, VstInt32 byteSize, bool isPreset)
                 ((FmSynthGui*)editor)->notifyCurrentPresetNameChanged();
             }
         }
+        else
+        {
+            for (int i = 0; i < parameters.size(); i++)
+            {
+                if (parameters[i].getId() == dto.id)
+                {
+                    parameters[i].value = dto.fValue;
+                    break;
+                }
+            }
+        } 
         idx += dto.byteLength;
     }
     updateParameters();
@@ -152,12 +122,12 @@ void FmSynth::updateParameters(int num)
         {
             for (int j = 0; j < parameters.size(); j++)
             {
-                voices[i].updateParameter(parameters[j].id, parameters[j].value);
+                voices[i].updateParameter(parameters[j].index, parameters[j].value);
             }
         }
         else
         {
-            voices[i].updateParameter(parameters[num].id, parameters[num].value);
+            voices[i].updateParameter(parameters[num].index, parameters[num].value);
         }
     }
 }
@@ -197,7 +167,7 @@ void FmSynth::getParameterName(VstInt32 index, char *label)
 {
     if (validParameter(index))
     {
-        strcpy(label, getNameForParam(parameters[index].id, false));
+        strcpy(label, getNameForParam(parameters[index].index, false));
     }
     else
     {
@@ -283,162 +253,4 @@ VstInt32 FmSynth::processEvents(VstEvents *events)
 void FmSynth::open()
 {
     setEditor(new FmSynthGui(this));
-}
-
-int FmSynth::getParameterIndexById(int id)
-{
-    for (int i = 0; i < parameters.size(); i++)
-    {
-        if (parameters[i].id == id)
-        {
-            return i;
-        }
-    }
-    return -1;
-}
-
-int FmSynth::getParameterIdByIndex(int index)
-{
-    if (validParameter(index))
-    {
-        return parameters[index].id;
-    }
-    return -1;
-}
-
-///////////// Preset manager code (should be splitted)
-
-bool PresetManager::readProgram(int number, std::string &name, bool readNameOnly, FILE *copyToTmp)
-{
-    fseek(f, 0, SEEK_SET);
-    char buf[256];
-    bool pgFound = false;
-    name.assign("");
-    bool doLoadProgram = !readNameOnly && !copyToTmp;
-    while (!feof(f))
-    {
-        fgets(buf, sizeof(buf), f);
-        char cmd = 0;
-        int id = 0;
-        float value = 0;
-        sscanf(buf, "%c %d %f", &cmd, &id, &value);
-        if (cmd == '{' && id == number)
-        {
-            pgFound = true;
-            // Set all parameters to initial value
-            if (doLoadProgram && value == 0)
-            {
-                for (int i = 0; i < total_number_of_parameters; i++)
-                {
-                    parameterHolder[i].value = 0;
-                }
-            }
-        }
-        if (!pgFound)
-            continue;
-
-        if (copyToTmp)
-            fprintf(copyToTmp, "%s", buf);
-
-        if (cmd == '+' && doLoadProgram)
-        {
-            for (int i = 0; i < parameterHolder.size(); i++)
-            {
-                if (parameterHolder[i].id == id)
-                {
-                    parameterHolder[i].value = value;
-                    break;
-                }
-            }
-        }
-        if (cmd == '$')
-        {
-            buf[strlen(buf) - 1] = 0;
-            name.assign(&buf[2]);
-            if (readNameOnly)
-                break;
-            if (doLoadProgram)
-                curProgramName = name;
-        }
-
-        if (cmd == '}')
-            break;
-    }
-    return pgFound;
-}
-
-void PresetManager::init()
-{
-    resolveWorkDir();
-    presetNames.clear();
-    openFile(0);
-    bool pgFound = true;
-    for (int i = 0; pgFound; i++)
-    {
-        std::string name;
-        pgFound = readProgram(i, name, true);
-        if (pgFound)
-            presetNames.push_back(name);
-    }
-    closeFile();
-}
-void PresetManager::openFile(int rw)
-{
-    closeFile();
-    std::string presetFileName = workDir + "\\" + fileName;
-    f = fopen(presetFileName.c_str(), rw ? "w" : "r");
-}
-
-void PresetManager::closeFile()
-{
-    if (f)
-    {
-        fclose(f);
-        f = nullptr;
-    }
-}
-std::string PresetManager::readProgram(int number)
-{
-    std::string s;
-    openFile(0);
-    readProgram(number, s, false);
-    closeFile();
-    return s;
-}
-
-void PresetManager::saveProgram(int number, const std::string &name)
-{
-    curProgramName = name;
-    std::string presetTmpFileName = std::string(workDir) + "\\" + "FmSynthPresets.tmp";
-    FILE *tmp = fopen(presetTmpFileName.c_str(), "w");
-
-    openFile(0);
-
-    for (int i = 0; i < presetNames.size(); i++)
-    {
-        if (i != number)
-        {
-            std::string s;
-            readProgram(i, s, false, tmp);
-        }
-    }
-
-    fprintf(tmp, "{ %d\n$ %s\n", number, name.c_str());
-    for (int i = 0; i < total_number_of_parameters; i++)
-    {
-        auto p = &parameterHolder[i];
-        fprintf(tmp, "+ %d %f\n", p->id, p->value);
-    }
-    fprintf(tmp, "}\n");
-    fclose(tmp);
-    closeFile();
-
-    openFile(1);
-    tmp = fopen(presetTmpFileName.c_str(), "r");
-    char ch;
-    while ((ch = fgetc(tmp)) != EOF)
-        fputc(ch, f);
-    fclose(tmp);
-    closeFile();
-    init();
 }

@@ -1,14 +1,12 @@
 const params = require('./params')
 const fs = require('fs')
+const crypto = require('crypto')
 
 const dtos = []
 const groupData = []
-let id = -1
-function nextId() {
-    do {
-        id++
-    } while (params.reservedIds.includes(id))
-    return id
+let index = -1
+function nextIndex() {
+    return ++index
 }
 
 function iterate(obj, parent, parentShort) {
@@ -24,7 +22,7 @@ function iterate(obj, parent, parentShort) {
                 dtos.push({
                     fullName,
                     shortName: parentShortStr + obj[key],
-                    id: nextId()
+                    index: nextIndex()
                 })
             } else if (key === '_group') {
                 const data = { groupId: obj[key], groupName: params[obj[key]]._groupName, parent, start: dtos.length }
@@ -41,19 +39,34 @@ function fullNameToVarName(fn) {
     return fn.replace(/\//g, '__').replace(/ /g, '_')
 }
 
+function getSaveId(nameToHash) {
+    const h = crypto.createHash('sha1')
+    h.update(nameToHash)
+    return new Int32Array(h.digest().buffer)[0]
+}
+
 let code = `
 #pragma once
 
 constexpr int total_number_of_parameters = ${dtos.length};\n\n`
 
-let nameGetterCode = `constexpr const char *getNameForParam(int id, bool fullName)\n{\n`
+let nameGetterCode = `constexpr const char *getNameForParam(int idx, bool fullName)\n{\n`
+let saveIdGetterCode = `constexpr int getSaveIdForParam(int idx)\n{\n    switch(idx)\n    {\n`
+const saveIds = []
 
 dtos.forEach(dto => {
-    code += `constexpr int id_${fullNameToVarName(dto.fullName)} = ${dto.id};\n`
-    nameGetterCode += `    if (id == ${dto.id}) return fullName ? "${dto.fullName}" : "${dto.shortName}";\n`
+    code += `constexpr int idx_${fullNameToVarName(dto.fullName)} = ${dto.index};\n`
+    nameGetterCode += `    if (idx == ${dto.index}) return fullName ? "${dto.fullName}" : "${dto.shortName}";\n`
+    const saveId = getSaveId(dto.fullName)
+    if (saveIds.includes(saveId) || params._reservedIds.some(x => x.id === saveId)) {
+        throw `Save id conflict for param #${dto.index} ${dto.fullName} (${saveId} in ${saveIds.join()})!`
+    }
+    saveIds.push(saveId)
+    saveIdGetterCode += `        case ${dto.index}: return ${saveId};\n`
 })
 
 nameGetterCode += '    return fullName ? "unknown full" : "unknown";\n}\n'
+saveIdGetterCode += '        default: return 0;\n    }\n}\n'
 
 code += '\n'
 
@@ -74,5 +87,7 @@ groupData.forEach(grp => {
 code += '\n'
 
 code += nameGetterCode
+
+code += '\n' + saveIdGetterCode
 
 fs.writeFileSync('params.h', code)

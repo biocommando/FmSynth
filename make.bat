@@ -11,11 +11,12 @@ rem g++ -c "D:\VST3 SDK\vstgui.sf\vstgui\aeffguieditor.cpp" -DWIN32 -I"D:\VST3 S
 rem g++ -c "D:\VST3 SDK\vstgui.sf\vstgui\vstgui.cpp" -DWIN32 -trigraphs -DWIN32 -I"D:\VST3 SDK" -I"D:\VST3 SDK\plugininterfaces\source\vst2.x" -I"D:\VST3 SDK\public.sdk\source\vst2.x" -o vstgui.o
 rem g++ -c "D:\VST3 SDK\vstgui.sf\vstgui\vstcontrols.cpp" -DWIN32 -I"D:\VST3 SDK" -I"D:\VST3 SDK\plugininterfaces\source\vst2.x" -I"D:\VST3 SDK\public.sdk\source\vst2.x" -o vstcontrols.o
 
+g++ -c PresetManager.cpp -Ofast
 g++ -c FmSynthGui.cpp -DWIN32 -I"D:\VST3 SDK" -I"D:\VST3 SDK\vstgui.sf\vstgui" -I"D:\VST3 SDK\plugininterfaces\source\vst2.x" -I"D:\VST3 SDK\public.sdk\source\vst2.x"
 g++ -c FmSynth.cpp -DWIN32 -I"D:\VST3 SDK" -I"D:\VST3 SDK\vstgui.sf\vstgui" -I"D:\VST3 SDK\plugininterfaces\source\vst2.x" -I"D:\VST3 SDK\public.sdk\source\vst2.x" -Ofast
 
 dllwrap  --output-def libFmSynth.def  --driver-name c++ ^
-AdsrEnvelope.o audioeffect.o audioeffectx.o vstplugmain.o EnvelopeStage.o FmSynth.o  ^
+AdsrEnvelope.o audioeffect.o audioeffectx.o vstplugmain.o EnvelopeStage.o FmSynth.o PresetManager.o ^
 aeffguieditor.o FmSynthGui.o vstgui.o vstcontrols.o ^
 -L. --add-stdcall-alias -lole32 -lkernel32 -lgdi32 -lgdiplus -luuid -luser32 -lshell32 -mwindows --no-export-all-symbols --def FmSynth.def ^
 -o 4OpFmSynth.dll -Ofast

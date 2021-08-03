@@ -2,7 +2,7 @@
 
 #include "AdsrEnvelope.h"
 #include "common.h"
-#include "DcFilter.h"
+#include "LowpassFilter.h"
 #include <math.h>
 
 constexpr float pi = 3.14159265358979323846f;
@@ -53,11 +53,14 @@ class FmVoice
 {
     std::vector<FmOperator> ops;
     std::vector<AdsrEnvelope> env;
+    std::vector<Filter> filters;
     float outputVol[4] = {0, 0, 0, 0};
     float ratios[2][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}};
     float freq;
     float sampleRate;
     float velocity;
+    float filterAmount = 0;
+    int filterType = 0;
 
     DcFilter dcBlock;
 
@@ -80,6 +83,10 @@ public:
     {
         ops.resize(4);
         env.resize(4);
+        for (int i = 0; i < 4; i++)
+        {
+            filters.push_back(Filter(sampleRate));
+        }
     }
 
     bool process(float *channel0, float *channel1)
@@ -95,6 +102,12 @@ public:
             }
             env[i].calculateNext();
             ops[i].process(fm, env[i].getEnvelope());
+            if (filterType > 0)
+            {
+                ops[i].value = filterType == 1                               //
+                                   ? filters[i].processLowpass(ops[i].value) //
+                                   : filters[i].processHighpass(ops[i].value);
+            }
             *channel0 += outputVol[i] * ops[i].value;
             ended = ended && env[i].ended();
         }
@@ -112,54 +125,78 @@ public:
         }
     }
 
-    void updateParameter(int id, float value)
+    void updateParameter(int idx, float value)
     {
-        auto opGroup = (id - group_osc_1_start) / group_oscillator_length;
+        auto opGroup = (idx - group_osc_1_start) / group_oscillator_length;
         if (opGroup >= 0 && opGroup < 4)
         {
-            auto paramInGroup = (id - group_osc_1_start) % group_oscillator_length;
-            if (paramInGroup == id_osc_1__fm_parameters__ratio_nominator)
+            auto paramInGroup = (idx - group_osc_1_start) % group_oscillator_length;
+            if (paramInGroup == idx_osc_1__fm_parameters__ratio_nominator)
             {
                 ratios[0][opGroup] = value;
                 updatePhaseIncForOperator(opGroup);
             }
-            else if (paramInGroup == id_osc_1__fm_parameters__ratio_divider)
+            else if (paramInGroup == idx_osc_1__fm_parameters__ratio_divider)
             {
                 ratios[1][opGroup] = value;
                 updatePhaseIncForOperator(opGroup);
             }
-            else if (paramInGroup == id_osc_1__fm_parameters__velocity_sensitivity)
+            else if (paramInGroup == idx_osc_1__fm_parameters__velocity_sensitivity)
             {
                 value *= value;
                 ops[opGroup].velocityMultiplier = (1 - value) + value * velocity;
             }
-            else if (paramInGroup == id_osc_1__fm_parameters__waveform)
+            else if (paramInGroup == idx_osc_1__fm_parameters__waveform)
             {
                 ops[opGroup].waveform = (int)(value * 4 * 0.999);
             }
-            else if (paramInGroup == id_osc_1__modulation_routing__route_to_output)
+            else if (paramInGroup == idx_osc_1__modulation_routing__route_to_output)
             {
                 outputVol[opGroup] = value;
             }
-            else if (paramInGroup >= id_osc_1__modulation_routing__route_to_osc1 && paramInGroup <= id_osc_1__modulation_routing__route_to_osc4)
+            else if (paramInGroup >= idx_osc_1__modulation_routing__route_to_osc1 && paramInGroup <= idx_osc_1__modulation_routing__route_to_osc4)
             {
-                ops[paramInGroup - id_osc_1__modulation_routing__route_to_osc1].mods[opGroup] = value;
+                ops[paramInGroup - idx_osc_1__modulation_routing__route_to_osc1].mods[opGroup] = value * 10;
             }
-            else if (paramInGroup == id_osc_1__envelope__attack)
+            else if (paramInGroup == idx_osc_1__envelope__attack)
             {
                 env[opGroup].setAttack(sampleRate * 4 * value);
             }
-            else if (paramInGroup == id_osc_1__envelope__decay)
+            else if (paramInGroup == idx_osc_1__envelope__decay)
             {
                 env[opGroup].setDecay(sampleRate * 4 * value);
             }
-            else if (paramInGroup == id_osc_1__envelope__sustain)
+            else if (paramInGroup == idx_osc_1__envelope__sustain)
             {
                 env[opGroup].setSustain(value);
             }
-            else if (paramInGroup == id_osc_1__envelope__release)
+            else if (paramInGroup == idx_osc_1__envelope__release)
             {
                 env[opGroup].setRelease(sampleRate * 4 * value);
+            }
+        }
+        else if (idx == idx_filter_type || idx == idx_filter)
+        {
+            if (idx == idx_filter_type)
+            {
+                filterType = (int)(value * 3 * 0.999);
+            }
+            else
+            {
+                filterAmount = value * 0.999f;
+            }
+            if (filterType > 0)
+            {
+                const float amountSqr = filterAmount * filterAmount;
+                const auto factor = filterType == 1 ? 1 - amountSqr : amountSqr;
+                const auto filterHz = sampleRate * 0.5f * factor;
+                for (int i = 0; i < 4; i++)
+                {
+                    if (filterType == 1)
+                        filters[i].updateLowpass(filterHz);
+                    else
+                        filters[i].updateHighpass(filterHz);
+                }
             }
         }
     }

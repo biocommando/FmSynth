@@ -31,9 +31,6 @@ constexpr int TEXT_H = 16;
 
 extern CColor ice, bggray;
 
-extern std::string workDir;
-extern void resolveWorkDir();
-
 constexpr int tagPresetList = 102;
 constexpr int tagPresetActionList = 103;
 constexpr int tagParam = 202;
@@ -58,10 +55,10 @@ public:
 
     void setLabel(float value)
     {
-        if (paramId == id_osc_1__fm_parameters__waveform ||
-            paramId == id_osc_2__fm_parameters__waveform ||
-            paramId == id_osc_3__fm_parameters__waveform ||
-            paramId == id_osc_4__fm_parameters__waveform)
+        if (paramId == idx_osc_1__fm_parameters__waveform ||
+            paramId == idx_osc_2__fm_parameters__waveform ||
+            paramId == idx_osc_3__fm_parameters__waveform ||
+            paramId == idx_osc_4__fm_parameters__waveform)
         {
             int v = value * 4 * 0.999;
             const char waveTableNames[][8] = {
@@ -71,6 +68,15 @@ public:
                 "/\\/\\--",
             };
             label->setText(waveTableNames[v]);
+            return;
+        }
+        else if (paramId == idx_filter_type)
+        {
+            int v = value * 3 * 0.999;
+            const char typeNames[][8] = {
+                "off", "lo-pass", "hi-pass"
+            };
+            label->setText(typeNames[v]);
             return;
         }
         char text[5];
@@ -105,8 +111,7 @@ class FmSynthGui : public AEffGUIEditor, public CControlListener
 
     CBitmap *loadBitmap(const char *relativePath)
     {
-        resolveWorkDir();
-        std::string s = workDir + "\\" + relativePath;
+        std::string s = Util::getWorkDir() + "\\" + relativePath;
         std::wstring ws(s.size(), L'#');
         mbstowcs(&ws[0], s.c_str(), s.size());
         auto bmp = Gdiplus::Bitmap::FromFile(ws.c_str(), false);
@@ -115,14 +120,14 @@ class FmSynthGui : public AEffGUIEditor, public CControlListener
         return cbmp;
     }
 
-    Knob *addKnob(CFrame *xframe, int x, int y, int id, int tag)
+    Knob *addKnob(CFrame *xframe, int x, int y, int idx, int tag)
     {
         const CColor cBg = kBlackCColor, cFg = ice;
         GRID_RECT(knobRect, x, y, KNOB_SIZE, KNOB_SIZE);
-        auto knob = new Knob(knobRect, this, tag, knobBackground, nullptr, id);
+        auto knob = new Knob(knobRect, this, tag, knobBackground, nullptr, idx);
         ADD_TEXT("00", x, y + 0.7, KNOB_SIZE, TEXT_H, knob->label = label);
         xframe->addView(knob);
-        knob->setValue(synth()->getParameter(synth()->getParameterIndexById(id)));
+        knob->setValue(synth()->getParameter(idx));
         knobs.push_back(knob);
         return knob;
     }
@@ -134,23 +139,6 @@ class FmSynthGui : public AEffGUIEditor, public CControlListener
         if (setFrameColor)
             ctrl->setFrameColor(cFg);
         ctrl->setFontColor(cFg);
-    }
-
-    std::vector<std::string> splitString(const std::string &s, char c)
-    {
-        std::vector<std::string> ret;
-        int pos = 0;
-        do
-        {
-            auto pos0 = pos;
-            pos = s.find(c, pos);
-            if (pos != std::string::npos)
-            {
-                ret.push_back(s.substr(pos0, pos - pos0));
-                pos++;
-            }
-        } while (pos != std::string::npos);
-        return ret;
     }
 
 public:
@@ -185,10 +173,10 @@ public:
         std::string currParent = "";
         int cursX = 0, cursY = 0;
 
-        for (int i = 0; i < total_number_of_parameters; i++)
+        for (int i = group_osc_1_start; i < group_osc_1_start + group_oscillator_length * 4; i++)
         {
-            auto id = synth()->getParameterIdByIndex(i);
-            auto split = splitString(std::string(getNameForParam(id, true)) + "/", '/');
+            auto id = i;
+            auto split = Util::splitString(std::string(getNameForParam(id, true)), '/');
             auto parent = split[0] + "  -  " + split[1];
             if (parent != currParent)
             {
@@ -205,6 +193,11 @@ public:
                 cursX += 4;
             }
         }
+
+        ADD_TEXT(getNameForParam(idx_filter, true), 6, 13.35, GRID_SIZE, TEXT_H, label->setHoriAlign(kLeftText));
+        addKnob(xframe, 7, 13, idx_filter, tagParam);
+        ADD_TEXT(getNameForParam(idx_filter_type, true), 8, 13.35, GRID_SIZE, TEXT_H, label->setHoriAlign(kLeftText));
+        addKnob(xframe, 9, 13, idx_filter_type, tagParam);
 
         GRID_RECT(presetNameEditRect, 0, 13, GRID_SIZE * 6, TEXT_H * 1.5);
         currentPresetNameEdit = new CTextEdit(presetNameEditRect, this, tagPresetNameEdit, currentPresetName.c_str());
@@ -291,7 +284,7 @@ public:
             synth()->updateParameters();
             for (int i = 0; i < knobs.size(); i++)
             {
-                knobs[i]->setValue(synth()->getParameter(synth()->getParameterIndexById(knobs[i]->paramId)));
+                knobs[i]->setValue(synth()->getParameter(knobs[i]->paramId));
             }
         }
         else if (tag == tagPresetActionList)
@@ -316,18 +309,18 @@ public:
         else if (tag == tagParam)
         {
             auto knob = (Knob *)control;
-            const auto idx = synth()->getParameterIndexById(knob->paramId);
+            const auto idx = knob->paramId;
 
             float value;
             auto paramid = knob->paramId;
-            if (useRoundedValues && (paramid == id_osc_1__fm_parameters__ratio_nominator ||
-                                     paramid == id_osc_1__fm_parameters__ratio_divider ||
-                                     paramid == id_osc_2__fm_parameters__ratio_nominator ||
-                                     paramid == id_osc_2__fm_parameters__ratio_divider ||
-                                     paramid == id_osc_3__fm_parameters__ratio_nominator ||
-                                     paramid == id_osc_3__fm_parameters__ratio_divider ||
-                                     paramid == id_osc_4__fm_parameters__ratio_nominator ||
-                                     paramid == id_osc_4__fm_parameters__ratio_divider))
+            if (useRoundedValues && (paramid == idx_osc_1__fm_parameters__ratio_nominator ||
+                                     paramid == idx_osc_1__fm_parameters__ratio_divider ||
+                                     paramid == idx_osc_2__fm_parameters__ratio_nominator ||
+                                     paramid == idx_osc_2__fm_parameters__ratio_divider ||
+                                     paramid == idx_osc_3__fm_parameters__ratio_nominator ||
+                                     paramid == idx_osc_3__fm_parameters__ratio_divider ||
+                                     paramid == idx_osc_4__fm_parameters__ratio_nominator ||
+                                     paramid == idx_osc_4__fm_parameters__ratio_divider))
             {
                 value = ((int)(knob->getValue() * 100)) * 0.01;
             }

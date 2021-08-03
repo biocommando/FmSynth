@@ -52,5 +52,11 @@
         "_fullName": "osc 4",
         "_group": "_osc"
     },
-    "reservedIds": []
+    "filter type": "FltType",
+    "filter" : "filter",
+    "_reservedIds": [
+        { "id": 0, "name": "version"},
+        { "id": 1, "name": "build date"},
+        { "id": 2, "name": "program name"}
+    ]
 }
