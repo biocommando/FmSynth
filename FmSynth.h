@@ -5,12 +5,14 @@
 #include "Parameter.h"
 #include "PresetManager.h"
 #include <memory>
+#include <mutex>
 
 class FmSynth : public AudioEffectX
 {
 private:
     char *chunk = nullptr;
     std::vector<Parameter> parameters;
+    std::mutex voicesLock;
     std::vector<FmVoice> voices;
     PresetManager presetManager;
 

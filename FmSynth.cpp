@@ -110,6 +110,7 @@ VstInt32 FmSynth::setChunk(void *data, VstInt32 byteSize, bool isPreset)
 
 void FmSynth::updateParameters(int num)
 {
+    voicesLock.lock();
     for (int i = 0; i < voices.size(); i++)
     {
         if (num == -1)
@@ -124,10 +125,12 @@ void FmSynth::updateParameters(int num)
             voices[i].updateParameter(parameters[num].index, parameters[num].value);
         }
     }
+    voicesLock.unlock();
 }
 
 void FmSynth::processReplacing(float **inputs, float **outputs, VstInt32 sampleFrames)
 {
+    voicesLock.lock();
     for (int i = 0; i < sampleFrames; i++)
     {
         outputs[0][i] = 0;
@@ -144,6 +147,7 @@ void FmSynth::processReplacing(float **inputs, float **outputs, VstInt32 sampleF
             outputs[1][i] += ch1;
         }
     }
+    voicesLock.unlock();
 }
 
 float FmSynth::getParameter(VstInt32 index) { return validParameter(index) ? parameters[index].value : 0; }
@@ -216,6 +220,7 @@ VstInt32 FmSynth::processEvents(VstEvents *events)
         if ((midiMessage[0] & 0xF0) == 0b10000000)
         {
             // Note off, key = midievent->midiData[1]
+            voicesLock.lock();
             for (int i = 0; i < voices.size(); i++)
             {
                 if (voices[i].note == midiMessage[1])
@@ -223,6 +228,7 @@ VstInt32 FmSynth::processEvents(VstEvents *events)
                     voices[i].release();
                 }
             }
+            voicesLock.unlock();
             voicesChanged = true;
         }
         else if ((midiMessage[0] & 0xF0) == 0b10010000)
@@ -233,7 +239,33 @@ VstInt32 FmSynth::processEvents(VstEvents *events)
             auto v = FmVoice(sampleRate, velocity / 127.0f);
             v.note = key;
             v.trigger();
+            voicesLock.lock();
+
+            // Remove first pre-existing voice with the same note if there
+            // are multiple voices and the limit is exceeded.
+            // This is done to save CPU power for sounds with a long release time.
+            // Having a relatively high threshold for removing voices makes the
+            // optimization rather unnoticeable.
+            int first = -1, total = 0;
+            for (int i = 0; i < voices.size(); i++)
+            {
+                if (voices[i].note == key)
+                {
+                    if (first == -1)
+                    {
+                        first = i;
+                    }
+                    total++;
+                    if (total == 4)
+                    {
+                        voices.erase(voices.begin() + first);
+                        break;
+                    }
+                }
+            }
             voices.push_back(v);
+
+            voicesLock.unlock();
             voicesChanged = true;
         }
     }
