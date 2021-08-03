@@ -94,9 +94,12 @@ void AdsrEnvelope::triggerStage(int stage)
 
 void AdsrEnvelope::release()
 {
-    releaseLevel = envelope;
-    releaseStage = stage;
-    triggerStage(3);
+    if (stage < 3)
+    {
+        releaseLevel = envelope;
+        releaseStage = stage;
+        triggerStage(3);
+    }
 }
 
 int AdsrEnvelope::getStage()
