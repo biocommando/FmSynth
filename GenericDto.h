@@ -7,8 +7,8 @@
 class GenericDto
 {
 public:
-    int iValue;
-    float fValue;
+    int iValue = 0;
+    float fValue = 0;
     std::string sValue;
     int type;
     int id;
@@ -79,6 +79,23 @@ public:
         }
 
         return d;
+    }
+
+    static std::vector<GenericDto> deserializeAll(const std::string &serialized)
+    {
+        std::string s = serialized;
+        std::vector<GenericDto> result;
+        while (s.size() > 0)
+        {
+            auto dto = GenericDto::deserialize(s);
+            if (!dto.isValid() || dto.byteLength <= 0)
+            {
+                break;
+            }
+            result.push_back(dto);
+            s = s.substr(dto.byteLength);
+        }
+        return result;
     }
 
     bool isValid() { return type >= 1 && type <= 3; }

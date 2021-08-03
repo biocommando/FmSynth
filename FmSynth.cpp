@@ -75,22 +75,17 @@ VstInt32 FmSynth::getChunk(void **data, bool isPreset)
 
 VstInt32 FmSynth::setChunk(void *data, VstInt32 byteSize, bool isPreset)
 {
-    auto s = std::string((char *)data, byteSize);
-    int idx = 0;
-    while (idx < byteSize)
+    auto dtos = GenericDto::deserializeAll(std::string((char *)data, byteSize));
+    for (int i = 0; i < dtos.size(); i++)
     {
-        auto dto = GenericDto::deserialize(s.substr(idx));
-        if (!dto.isValid() || dto.byteLength <= 0)
-        {
-            break;
-        }
-        if (dto.id == 0 || dto.id == 1)
+        const auto dto = &dtos[i];
+        if (dto->id == 0 || dto->id == 1)
         {
             // reserved ids, pass
         }
-        else if (dto.id == 2)
+        else if (dto->id == 2)
         {
-            presetManager.setProgramName(dto.sValue);
+            presetManager.setProgramName(dto->sValue);
             
             if (editor)
             {
@@ -101,14 +96,13 @@ VstInt32 FmSynth::setChunk(void *data, VstInt32 byteSize, bool isPreset)
         {
             for (int i = 0; i < parameters.size(); i++)
             {
-                if (parameters[i].getId() == dto.id)
+                if (parameters[i].getId() == dto->id)
                 {
-                    parameters[i].value = dto.fValue;
+                    parameters[i].value = dto->fValue;
                     break;
                 }
             }
-        } 
-        idx += dto.byteLength;
+        }
     }
     updateParameters();
     return 0;
