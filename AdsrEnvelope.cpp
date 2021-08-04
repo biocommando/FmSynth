@@ -27,6 +27,8 @@ void AdsrEnvelope::setSustain(float level)
 
 void AdsrEnvelope::setRelease(int samples)
 {
+    if (samples < 40)
+        samples = 40; // to smoothen the clicking sound when using minimal release
     stages[3].setLength(samples);
 }
 
