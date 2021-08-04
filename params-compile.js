@@ -40,6 +40,9 @@ function fullNameToVarName(fn) {
 }
 
 function getSaveId(nameToHash) {
+    const found = params._reservedIds.find(x => x.name === nameToHash)
+    if (found)
+        return found.id
     const h = crypto.createHash('sha1')
     h.update(nameToHash)
     return new Int32Array(h.digest().buffer)[0]
@@ -58,8 +61,10 @@ dtos.forEach(dto => {
     code += `constexpr int idx_${fullNameToVarName(dto.fullName)} = ${dto.index};\n`
     nameGetterCode += `    if (idx == ${dto.index}) return fullName ? "${dto.fullName}" : "${dto.shortName}";\n`
     const saveId = getSaveId(dto.fullName)
-    if (saveIds.includes(saveId) || params._reservedIds.some(x => x.id === saveId)) {
-        throw `Save id conflict for param #${dto.index} ${dto.fullName} (${saveId} in ${saveIds.join()})!`
+    if (saveIds.includes(saveId) ||
+        params._reservedIds.some(x => x.id === saveId && x.name !== dto.fullName)) {
+        throw `Save id conflict for param #${dto.index} '${dto.fullName}'! ` +
+        `You can fix this by defining an explicit id in _reservedIds list.`
     }
     saveIds.push(saveId)
     saveIdGetterCode += `        case ${dto.index}: return ${saveId};\n`
