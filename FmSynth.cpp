@@ -52,11 +52,11 @@ VstInt32 FmSynth::getChunk(void **data, bool isPreset)
         free(chunk);
         chunk = nullptr;
     }
-    auto version = GenericDto::createInt(0, 0);
+    auto version = GenericDto::createInt(0, reserved_id_version);
 
     std::string s = version.serialize();
-    s += GenericDto::createString(BUILD_DATE, 1).serialize();
-    s += GenericDto::createString(presetManager.getProgramName(), 2).serialize();
+    s += GenericDto::createString(BUILD_DATE, reserved_id_build_date).serialize();
+    s += GenericDto::createString(presetManager.getProgramName(), reserved_id_program_name).serialize();
     for (int i = 0; i < parameters.size(); i++)
     {
         auto param = &parameters[i];
@@ -79,17 +79,17 @@ VstInt32 FmSynth::setChunk(void *data, VstInt32 byteSize, bool isPreset)
     for (int i = 0; i < dtos.size(); i++)
     {
         const auto dto = &dtos[i];
-        if (dto->id == 0 || dto->id == 1)
+        if (dto->id == reserved_id_version || dto->id == reserved_id_build_date)
         {
             // reserved ids, pass
         }
-        else if (dto->id == 2)
+        else if (dto->id == reserved_id_program_name)
         {
             presetManager.setProgramName(dto->sValue);
-            
+
             if (editor)
             {
-                ((FmSynthGui*)editor)->notifyCurrentPresetNameChanged();
+                ((FmSynthGui *)editor)->notifyCurrentPresetNameChanged();
             }
         }
         else

@@ -70,6 +70,10 @@ dtos.forEach(dto => {
     saveIdGetterCode += `        case ${dto.index}: return ${saveId};\n`
 })
 
+code += '\n' + params._reservedIds
+    .map(x => `constexpr int reserved_id_${fullNameToVarName(x.name)} = ${x.id};`)
+    .join('\n') + '\n'
+
 nameGetterCode += '    return fullName ? "unknown full" : "unknown";\n}\n'
 saveIdGetterCode += '        default: return 0;\n    }\n}\n'
 
