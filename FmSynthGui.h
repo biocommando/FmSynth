@@ -60,7 +60,7 @@ public:
             paramId == idx_osc_3__fm_parameters__waveform ||
             paramId == idx_osc_4__fm_parameters__waveform)
         {
-            int v = value * 4 * 0.999;
+            int v = Util::getSelection(value, 4);
             const char waveTableNames[][8] = {
                 "-/\\/\\-",
                 "-/\\---",
@@ -72,11 +72,19 @@ public:
         }
         else if (paramId == idx_filter_type)
         {
-            int v = value * 3 * 0.999;
+            int v = Util::getSelection(value, 3);
             const char typeNames[][8] = {
                 "off", "lo-pass", "hi-pass"
             };
             label->setText(typeNames[v]);
+            return;
+        } else if (paramId == idx_fix_osc)
+        {
+            int v = Util::getSelection(value, 5);
+            const char selections[][8] = {
+                "none", "osc 1", "osc 2", "osc 3", "osc 4"
+            };
+            label->setText(selections[v]);
             return;
         }
         char text[5];
@@ -198,6 +206,8 @@ public:
         addKnob(xframe, 7, 13, idx_filter, tagParam);
         ADD_TEXT(getNameForParam(idx_filter_type, true), 8, 13.35, GRID_SIZE, TEXT_H, );
         addKnob(xframe, 9, 13, idx_filter_type, tagParam);
+        ADD_TEXT(getNameForParam(idx_fix_osc, true), 10, 13.35, GRID_SIZE, TEXT_H, );
+        addKnob(xframe, 11, 13, idx_fix_osc, tagParam);
 
         GRID_RECT(presetNameEditRect, 0, 13, GRID_SIZE * 6, TEXT_H * 1.5);
         currentPresetNameEdit = new CTextEdit(presetNameEditRect, this, tagPresetNameEdit, currentPresetName.c_str());

@@ -78,4 +78,9 @@ public:
     {
         return resolveWorkDir(workOutsideOfRoot);
     }
+
+    static int getSelection(float value, int numOptions)
+    {
+        return value * numOptions * 0.999;
+    }
 };

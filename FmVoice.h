@@ -61,10 +61,11 @@ class FmVoice
     float velocity;
     float filterAmount = 0;
     int filterType = 0;
+    int fixedOsc = -1;
 
     DcFilter dcBlock;
 
-    float calculatePhaseInc()
+    float calculatePhaseInc(float note)
     {
         return pow(2, note / 12) * 16.352 / (sampleRate / 2) * pi;
     }
@@ -72,7 +73,10 @@ class FmVoice
     void updatePhaseIncForOperator(int op)
     {
         float ratio = ratios[0][op] / (ratios[1][op] < 1e-6 ? 1e-6 : ratios[1][op]);
-        ops[op].phaseInc = ratio * freq;
+        if (fixedOsc == op)
+            ops[op].phaseInc = ratio * calculatePhaseInc(-24);
+        else
+            ops[op].phaseInc = ratio * freq;
     }
 
 public:
@@ -118,7 +122,7 @@ public:
 
     void trigger()
     {
-        freq = calculatePhaseInc();
+        freq = calculatePhaseInc(note);
         for (int i = 0; i < 4; i++)
         {
             env[i].trigger();
@@ -148,7 +152,7 @@ public:
             }
             else if (paramInGroup == idx_osc_1__fm_parameters__waveform)
             {
-                ops[opGroup].waveform = (int)(value * 4 * 0.999);
+                ops[opGroup].waveform = Util::getSelection(value, 4);
             }
             else if (paramInGroup == idx_osc_1__modulation_routing__route_to_output)
             {
@@ -179,7 +183,7 @@ public:
         {
             if (idx == idx_filter_type)
             {
-                filterType = (int)(value * 3 * 0.999);
+                filterType = Util::getSelection(value, 3);
             }
             else
             {
@@ -198,6 +202,18 @@ public:
                         filters[i].updateHighpass(filterHz);
                 }
             }
+        }
+        else if (idx == idx_fix_osc)
+        {
+            if (fixedOsc != -1)
+            {
+                auto f = fixedOsc;
+                fixedOsc = -1;
+                updatePhaseIncForOperator(f);
+            }
+            fixedOsc = Util::getSelection(value, 5) - 1;
+            if (fixedOsc != -1)
+                updatePhaseIncForOperator(fixedOsc);
         }
     }
 
