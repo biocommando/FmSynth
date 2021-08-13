@@ -6,11 +6,11 @@
 
 class GenericDto
 {
+    int type;
 public:
     int iValue = 0;
     float fValue = 0;
     std::string sValue;
-    int type;
     int id;
     // This is populated only when deserializing a payload
     int byteLength = -1;
@@ -87,7 +87,7 @@ public:
         std::vector<GenericDto> result;
         while (s.size() > 0)
         {
-            auto dto = GenericDto::deserialize(s);
+            auto dto = deserialize(s);
             if (!dto.isValid() || dto.byteLength <= 0)
             {
                 break;
@@ -96,6 +96,16 @@ public:
             s = s.substr(dto.byteLength);
         }
         return result;
+    }
+
+    static std::string serializeParameter(float value, int idx)
+    {
+        const auto saveId = getSaveIdForParam(idx);
+        const auto opts = getNumberOfOptions(idx);
+        if (opts == 0)
+            return createFloat(value, saveId).serialize();
+        else
+            return createInt(Util::getSelection(value, opts), saveId).serialize();
     }
 
     bool isValid() { return type >= 1 && type <= 3; }

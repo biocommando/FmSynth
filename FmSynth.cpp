@@ -60,11 +60,7 @@ VstInt32 FmSynth::getChunk(void **data, bool isPreset)
     for (int i = 0; i < parameters.size(); i++)
     {
         auto param = &parameters[i];
-        auto opts = getNumberOfOptions(i);
-        if (opts == 0)
-            s += GenericDto::createFloat(param->value, param->getId()).serialize();
-        else
-            s += GenericDto::createInt(Util::getSelection(param->value, opts), param->getId()).serialize();
+        s += GenericDto::serializeParameter(param->value, i);
     }
     chunk = (char *)malloc(s.size() + 1);
     if (chunk)
