@@ -1,7 +1,6 @@
 rem @echo off
 node params-compile.js
-echo #pragma once > build.h
-node -e "console.log('#define BUILD_DATE ""' + new Date().toISOString() + '""')" >> build.h
+node build-info.js
 g++ -c AdsrEnvelope.cpp -Ofast
 g++ -c EnvelopeStage.cpp -Ofast
 rem g++ -c "D:\VST3 SDK\public.sdk\source\vst2.x\audioeffect.cpp" -DWIN32 -I"D:\VST3 SDK" -I"D:\VST3 SDK\plugininterfaces\source\vst2.x" -I"D:\VST3 SDK\public.sdk\source\vst2.x" -o audioeffect.o -Ofast

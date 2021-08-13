@@ -6,9 +6,31 @@
 #include <math.h>
 
 constexpr float pi = 3.14159265358979323846f;
+constexpr int lookupTableSize = 8192;
 
 class FmOperator
 {
+    static inline float calcSin(float phase)
+    {
+        static float lookup[lookupTableSize];
+        static bool init = false;
+        if (!init)
+        {
+            init = true;
+            for (int i = 0; i < lookupTableSize; i++)
+            {
+                lookup[i] = sin(i * 2 * pi / lookupTableSize);
+            }
+        }
+        int pos = (phase / pi + 1) * lookupTableSize / 2;
+
+        if (pos >= lookupTableSize)
+            pos = pos % lookupTableSize;
+        else if (pos < 0)
+            pos = lookupTableSize - ((-pos) % lookupTableSize);
+        return lookup[pos];
+    }
+
 public:
     float value = 0;
     float phase = 0;
@@ -45,7 +67,7 @@ public:
             }
         }
 
-        value = sin(modulatedPhase) * env * velocityMultiplier;
+        value = calcSin(modulatedPhase) * env * velocityMultiplier;
     }
 };
 
@@ -62,8 +84,10 @@ class FmVoice
     float filterAmount = 0;
     int filterType = 0;
     int fixedOsc = -1;
+    int oversamplingFactor;
 
     DcFilter dcBlock;
+    Filter downSamplingFilter;
 
     float calculatePhaseInc(float note)
     {
@@ -79,24 +103,10 @@ class FmVoice
             ops[op].phaseInc = ratio * freq;
     }
 
-public:
-    float note;
-
-    FmVoice(int sampleRate, float velocity) : sampleRate(sampleRate),
-                                              dcBlock(DcFilter(sampleRate)), velocity(velocity)
-    {
-        ops.resize(4);
-        env.resize(4);
-        for (int i = 0; i < 4; i++)
-        {
-            filters.push_back(Filter(sampleRate));
-        }
-    }
-
-    bool process(float *channel0, float *channel1)
+    bool processOneSample(float *output)
     {
         bool ended = true;
-        *channel0 = 0;
+        *output = 0;
         for (int i = 0; i < 4; i++)
         {
             float fm = 0;
@@ -112,12 +122,43 @@ public:
                                    ? filters[i].processLowpass(ops[i].value) //
                                    : filters[i].processHighpass(ops[i].value);
             }
-            *channel0 += outputVol[i] * ops[i].value;
+            *output += outputVol[i] * ops[i].value;
             ended = ended && env[i].ended();
         }
-        *channel0 = dcBlock.process(*channel0);
-        *channel1 = *channel0;
         return !ended;
+    }
+
+public:
+    float note;
+
+    FmVoice(int sampleRate, int oversamplingFactor, float velocity)
+        : sampleRate(sampleRate * oversamplingFactor), oversamplingFactor(oversamplingFactor),
+          dcBlock(DcFilter(sampleRate)), velocity(velocity),
+          downSamplingFilter(sampleRate * oversamplingFactor)
+    {
+        ops.resize(4);
+        env.resize(4);
+        for (int i = 0; i < 4; i++)
+        {
+            filters.push_back(Filter(sampleRate * oversamplingFactor));
+        }
+        downSamplingFilter.updateLowpass(sampleRate * 0.5f);
+    }
+
+    bool process(float *channel0, float *channel1)
+    {
+        float v;
+        bool ok = true;
+        for (int i = 0; i < oversamplingFactor; i++)
+        {
+            ok = ok && processOneSample(&v);
+            v = downSamplingFilter.processLowpass(v);
+        }
+
+        v = dcBlock.process(v);
+        *channel0 = v;
+        *channel1 = *channel0;
+        return ok;
     }
 
     void trigger()

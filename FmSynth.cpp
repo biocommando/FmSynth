@@ -35,6 +35,8 @@ FmSynth::FmSynth(audioMasterCallback audioMaster)
     {
         parameters.push_back(Parameter(i));
     }
+
+    oversamplingFactor = settings.getNumericSetting("oversampling");
 }
 
 FmSynth::~FmSynth()
@@ -52,7 +54,9 @@ VstInt32 FmSynth::getChunk(void **data, bool isPreset)
         free(chunk);
         chunk = nullptr;
     }
-    auto version = GenericDto::createInt(0, reserved_id_version);
+    int combined, major = VERSION_MAJOR, minor = VERSION_MINOR;
+    versionConvert(&combined, &major, &minor);
+    auto version = GenericDto::createInt(combined, reserved_id_version);
 
     std::string s = version.serialize();
     s += GenericDto::createString(BUILD_DATE, reserved_id_build_date).serialize();
@@ -239,7 +243,7 @@ VstInt32 FmSynth::processEvents(VstEvents *events)
             // Note on, key/velocity=midievent->midiData[1]/midievent->midiData[2]
             char key = midiMessage[1];
             char velocity = midiMessage[2];
-            auto v = FmVoice(sampleRate, velocity / 127.0f);
+            auto v = FmVoice(sampleRate, oversamplingFactor, velocity / 127.0f);
             v.note = key;
             v.trigger();
             voicesLock.lock();

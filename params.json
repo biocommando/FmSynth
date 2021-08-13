@@ -1,4 +1,5 @@
 {
+    "_pluginVersion": [1, 0],
     "_env": {
         "_groupName": "envelope",
         "attack": "A",

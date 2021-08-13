@@ -4,6 +4,7 @@
 #include "common.h"
 #include "Parameter.h"
 #include "PresetManager.h"
+#include "Settings.h"
 #include <memory>
 #include <mutex>
 
@@ -15,6 +16,8 @@ private:
     std::mutex voicesLock;
     std::vector<FmVoice> voices;
     PresetManager presetManager;
+    Settings settings;
+    int oversamplingFactor;
 
     bool validParameter(int idx) { return idx >= 0 && idx < parameters.size(); }
 

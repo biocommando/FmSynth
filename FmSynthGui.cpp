@@ -25,7 +25,14 @@ bool FmSynthGui::open(void *ptr)
 
     xframe->setBackgroundColor(cBg);
 
-    ADD_TEXT("Complex Kookaburra -- 4 OP non-fixed architecture FM Synth", 0, -0.375, GRID_SIZE * 14, TEXT_H, );
+    // Image source https://openclipart.org/detail/321966/a-kookaburra-bird
+    auto logoBmp = CBitmapLoader::load("FmSynthLogo.bmp");
+
+    CRect logoRect(wSize->right / 2 - logoBmp->getWidth() / 2, 0,
+                   wSize->right / 2 + logoBmp->getWidth() / 2, logoBmp->getHeight());
+    auto logo = new CView(logoRect);
+    logo->setBackground(logoBmp);
+    xframe->addView(logo);
 
     knobs.clear();
 
@@ -90,7 +97,7 @@ bool FmSynthGui::open(void *ptr)
     presetActionList->addEntry(new CMenuItem("Save preset as new"));
     xframe->addView(presetActionList);
 
-    ADD_TEXT("v 1.0 build " BUILD_DATE, 12, 13.25, 4 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
+    ADD_TEXT("v " VERSION_STRING " build " BUILD_DATE, 12, 13.25, 4 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
     ADD_TEXT("(c) 2021 Joonas Salonpaa", 12, 13.5, 4 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
     ADD_TEXT("github.com/biocommando/FmSynth", 12, 13.75, 4 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
 
@@ -155,13 +162,13 @@ void FmSynthGui::valueChanged(CControl *control)
         float value;
         auto paramid = knob->paramId;
         if (useRoundedValues && (paramid == idx_osc_1__fm_parameters__ratio_nominator ||
-                                    paramid == idx_osc_1__fm_parameters__ratio_divider ||
-                                    paramid == idx_osc_2__fm_parameters__ratio_nominator ||
-                                    paramid == idx_osc_2__fm_parameters__ratio_divider ||
-                                    paramid == idx_osc_3__fm_parameters__ratio_nominator ||
-                                    paramid == idx_osc_3__fm_parameters__ratio_divider ||
-                                    paramid == idx_osc_4__fm_parameters__ratio_nominator ||
-                                    paramid == idx_osc_4__fm_parameters__ratio_divider))
+                                 paramid == idx_osc_1__fm_parameters__ratio_divider ||
+                                 paramid == idx_osc_2__fm_parameters__ratio_nominator ||
+                                 paramid == idx_osc_2__fm_parameters__ratio_divider ||
+                                 paramid == idx_osc_3__fm_parameters__ratio_nominator ||
+                                 paramid == idx_osc_3__fm_parameters__ratio_divider ||
+                                 paramid == idx_osc_4__fm_parameters__ratio_nominator ||
+                                 paramid == idx_osc_4__fm_parameters__ratio_divider))
         {
             value = ((int)(knob->getValue() * 100)) * 0.01;
         }
