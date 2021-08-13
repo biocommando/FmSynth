@@ -2,7 +2,6 @@
 #include "common.h"
 #include "aeffguieditor.h"
 
-
 constexpr int TOP_MARGIN = 30;
 constexpr int LEFT_MARGIN = 10;
 
@@ -28,15 +27,68 @@ constexpr int TEXT_H = 16;
         aexpr;                                \
     } while (0)
 
+class AbstractValueFormatter
+{
+public:
+    virtual std::string format(float value, int paramId) = 0;
+    virtual ~AbstractValueFormatter() {}
+};
+
+class FloatValueFormatter : public AbstractValueFormatter
+{
+    float max;
+
+public:
+    FloatValueFormatter(float max = 1.0f) : max(max) {}
+    std::string format(float value, int paramId) { return std::to_string(value * max).substr(0, 5); }
+};
+
+class Integer0To100Formatter : public AbstractValueFormatter
+{
+    bool zeroPrefix;
+
+public:
+    Integer0To100Formatter(bool zeroPrefix = true) : zeroPrefix(zeroPrefix) {}
+    std::string format(float value, int paramId)
+    {
+        int vint = value * 100;
+        if (!zeroPrefix)
+            return std::to_string(vint);
+        if (vint == 100)
+            return "100";
+        else if (vint < 10)
+            return "00" + std::to_string(vint);
+        else
+            return "0" + std::to_string(vint);
+    }
+};
+
+class SelectionFormatter : public AbstractValueFormatter
+{
+public:
+    std::string format(float value, int paramId)
+    {
+        const auto opts = getNumberOfOptions(paramId);
+        if (opts > 0)
+        {
+            auto v = Util::getSelection(value, opts);
+            return getOptionLabel(paramId, v);
+        }
+        return "";
+    }
+};
 
 class Knob : public CKnob
 {
 public:
     int paramId;
     CTextLabel *label;
+    AbstractValueFormatter &formatter;
 
     Knob(const CRect &size, CControlListener *listener, long tag, CBitmap *background,
-         CBitmap *handle, int id) : CKnob(size, listener, tag, background, handle), paramId(id)
+         CBitmap *handle, int id, AbstractValueFormatter &formatter)
+        : CKnob(size, listener, tag, background, handle), paramId(id),
+          formatter(formatter)
     {
     }
 
@@ -48,21 +100,6 @@ public:
 
     void setLabel(float value)
     {
-        const auto opts = getNumberOfOptions(paramId);
-        if (opts > 0)
-        {
-            auto v = Util::getSelection(value, opts);
-            label->setText(getOptionLabel(paramId, v));
-            return;
-        }
-        char text[5];
-        int vint = value * 100;
-        if (vint == 100)
-            sprintf(text, "100");
-        else if (vint < 10)
-            sprintf(text, "00%d", vint);
-        else
-            sprintf(text, "0%d", vint);
-        label->setText(text);
+        label->setText(formatter.format(value, paramId).c_str());
     }
 };

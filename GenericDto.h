@@ -7,13 +7,13 @@
 class GenericDto
 {
     int type;
+    // This is populated only when deserializing a payload
+    int byteLength = -1;
 public:
     int iValue = 0;
     float fValue = 0;
     std::string sValue;
     int id;
-    // This is populated only when deserializing a payload
-    int byteLength = -1;
 
     GenericDto(int id = 0) : type(0), id(id) {}
 
