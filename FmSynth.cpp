@@ -60,8 +60,11 @@ VstInt32 FmSynth::getChunk(void **data, bool isPreset)
     for (int i = 0; i < parameters.size(); i++)
     {
         auto param = &parameters[i];
-        auto dto = GenericDto::createFloat(param->value, param->getId());
-        s += dto.serialize();
+        auto opts = getNumberOfOptions(i);
+        if (opts == 0)
+            s += GenericDto::createFloat(param->value, param->getId()).serialize();
+        else
+            s += GenericDto::createInt(Util::getSelection(param->value, opts), param->getId()).serialize();
     }
     chunk = (char *)malloc(s.size() + 1);
     if (chunk)
@@ -98,7 +101,11 @@ VstInt32 FmSynth::setChunk(void *data, VstInt32 byteSize, bool isPreset)
             {
                 if (parameters[i].getId() == dto->id)
                 {
-                    parameters[i].value = dto->fValue;
+                    if (dto->getType() == 'i')
+                        parameters[i].value =
+                            Util::getSelectionValue(dto->iValue, getNumberOfOptions(i));
+                    else
+                        parameters[i].value = dto->fValue;
                     break;
                 }
             }

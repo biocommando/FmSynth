@@ -41,7 +41,10 @@ bool PresetManager::readProgram(int number, std::string &name, bool readNameOnly
             {
                 if (parameterHolder[i].getId() == id)
                 {
-                    parameterHolder[i].value = value;
+                    if (getNumberOfOptions(i) > 0)
+                        parameterHolder[i].value = Util::getSelectionValue(value, getNumberOfOptions(i));
+                    else
+                        parameterHolder[i].value = value;
                     break;
                 }
             }
@@ -121,7 +124,11 @@ void PresetManager::saveProgram(int number, const std::string &name)
     for (int i = 0; i < total_number_of_parameters; i++)
     {
         auto p = &parameterHolder[i];
-        fprintf(tmp, "+ %d %f\n", p->getId(), p->value);
+        if (getNumberOfOptions(i) > 0)
+            fprintf(tmp, "+ %d %d\n", p->getId(),
+                    Util::getSelection(p->value, getNumberOfOptions(i)));
+        else
+            fprintf(tmp, "+ %d %f\n", p->getId(), p->value);
     }
     fprintf(tmp, "}\n");
     fclose(tmp);

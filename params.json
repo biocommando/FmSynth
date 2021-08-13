@@ -19,6 +19,12 @@
         "ratio nominator": "rt1",
         "ratio divider": "rt2",
         "waveform": "wav",
+        "_options:waveform": [
+            "-/\\/\\-",
+            "-/\\---",
+            "_/\\/\\_",
+            "/\\/\\--"
+        ],
         "velocity sensitivity": "vel"
     },
     "_osc" : {
@@ -53,8 +59,10 @@
         "_group": "_osc"
     },
     "filter type": "FltType",
+    "_options:filter type": ["off", "lo-pass", "hi-pass"],
     "filter" : "filter",
     "fix osc": "fixosc",
+    "_options:fix osc": ["none", "osc 1", "osc 2", "osc 3", "osc 4"],
     "_reservedIds": [
         { "id": 0, "name": "version"},
         { "id": 1, "name": "build date"},

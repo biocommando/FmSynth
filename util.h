@@ -83,4 +83,11 @@ public:
     {
         return value * numOptions * 0.999;
     }
+
+    static float getSelectionValue(int index, int numOptions)
+    {
+        if (numOptions == 0)
+            return 0;
+        return ((float)index + 0.5f) / (float)numOptions;
+    }
 };

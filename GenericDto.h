@@ -128,4 +128,16 @@ public:
         std::string header(headerBuf, sizeof(headerBuf));
         return header + payload;
     }
+
+    // Human readable type mapping: i = int, f = float, s = string, x = invalid
+    char getType()
+    {
+        if (type == 1)
+            return 'i';
+        if (type == 2)
+            return 'f';
+        if (type == 3)
+            return 's';
+        return 'x';
+    }
 };

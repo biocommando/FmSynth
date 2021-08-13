@@ -2,32 +2,9 @@
 #include "build.h"
 #include "aeffguieditor.h"
 #include "FmSynth.h"
+#include "CBitmapLoader.h"
+#include "UiCommon.h"
 #include <vector>
-
-constexpr int TOP_MARGIN = 30;
-constexpr int LEFT_MARGIN = 10;
-
-constexpr int GRID_SIZE = 60;
-
-constexpr int KNOB_SIZE = 40;
-
-constexpr int TEXT_H = 16;
-
-#define GRID_X(x) LEFT_MARGIN + GRID_SIZE *(x)
-
-#define GRID_Y(y) TOP_MARGIN + GRID_SIZE *(y)
-
-#define GRID_RECT(name, x, y, w, h) CRect name(GRID_X(x), GRID_Y(y), GRID_X(x) + (w), GRID_Y(y) + (h))
-
-#define ADD_TEXT(text, x, y, w, h, aexpr)     \
-    do                                        \
-    {                                         \
-        GRID_RECT(r, x, y, w, h);             \
-        auto label = new CTextLabel(r, text); \
-        setColors(label, false);              \
-        xframe->addView(label);               \
-        aexpr;                                \
-    } while (0)
 
 extern CColor ice, bggray;
 
@@ -35,69 +12,6 @@ constexpr int tagPresetList = 102;
 constexpr int tagPresetActionList = 103;
 constexpr int tagParam = 202;
 constexpr int tagPresetNameEdit = 301;
-
-class Knob : public CKnob
-{
-public:
-    int paramId;
-    CTextLabel *label;
-
-    Knob(const CRect &size, CControlListener *listener, long tag, CBitmap *background,
-         CBitmap *handle, int id) : CKnob(size, listener, tag, background, handle), paramId(id)
-    {
-    }
-
-    void setValue(float value)
-    {
-        CKnob::setValue(value);
-        setLabel(value);
-    }
-
-    void setLabel(float value)
-    {
-        if (paramId == idx_osc_1__fm_parameters__waveform ||
-            paramId == idx_osc_2__fm_parameters__waveform ||
-            paramId == idx_osc_3__fm_parameters__waveform ||
-            paramId == idx_osc_4__fm_parameters__waveform)
-        {
-            int v = Util::getSelection(value, 4);
-            const char waveTableNames[][8] = {
-                "-/\\/\\-",
-                "-/\\---",
-                "_/\\/\\_",
-                "/\\/\\--",
-            };
-            label->setText(waveTableNames[v]);
-            return;
-        }
-        else if (paramId == idx_filter_type)
-        {
-            int v = Util::getSelection(value, 3);
-            const char typeNames[][8] = {
-                "off", "lo-pass", "hi-pass"
-            };
-            label->setText(typeNames[v]);
-            return;
-        } else if (paramId == idx_fix_osc)
-        {
-            int v = Util::getSelection(value, 5);
-            const char selections[][8] = {
-                "none", "osc 1", "osc 2", "osc 3", "osc 4"
-            };
-            label->setText(selections[v]);
-            return;
-        }
-        char text[5];
-        int vint = value * 100;
-        if (vint == 100)
-            sprintf(text, "100");
-        else if (vint < 10)
-            sprintf(text, "00%d", vint);
-        else
-            sprintf(text, "0%d", vint);
-        label->setText(text);
-    }
-};
 
 class FmSynthGui : public AEffGUIEditor, public CControlListener
 {
@@ -115,17 +29,6 @@ class FmSynthGui : public AEffGUIEditor, public CControlListener
     FmSynth *synth()
     {
         return (FmSynth *)effect;
-    }
-
-    CBitmap *loadBitmap(const char *relativePath)
-    {
-        std::string s = Util::getWorkDir() + "\\" + relativePath;
-        std::wstring ws(s.size(), L'#');
-        mbstowcs(&ws[0], s.c_str(), s.size());
-        auto bmp = Gdiplus::Bitmap::FromFile(ws.c_str(), false);
-        auto cbmp = new CBitmap(bmp);
-        delete bmp;
-        return cbmp;
     }
 
     Knob *addKnob(CFrame *xframe, int x, int y, int idx, int tag)
@@ -170,7 +73,7 @@ public:
 
         auto xframe = new CFrame(frameSize, ptr, this);
 
-        knobBackground = loadBitmap("FmSynthKnob.bmp");
+        knobBackground = CBitmapLoader::load("FmSynthKnob.bmp");
 
         xframe->setBackgroundColor(cBg);
         

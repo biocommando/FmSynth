@@ -9,6 +9,10 @@ function nextIndex() {
     return ++index
 }
 
+let saveIntermediate = false
+
+const paramsWithOptions = []
+
 function iterate(obj, parent, parentShort) {
     const parentStr = parent ? parent + "/" : "";
     const parentShortStr = parentShort ? parentShort : "";
@@ -18,11 +22,16 @@ function iterate(obj, parent, parentShort) {
                 const fullName = parentStr + (obj[key]._fullName ? obj[key]._fullName : key)
                 iterate(obj[key], fullName, parentShortStr + key)
             } else if (key[0] !== '_') {
+                const idx = nextIndex()
                 const fullName = parentStr + key
+                if (obj['_options:' + key]) {
+
+                    paramsWithOptions.push({index: idx, fullName, options: obj['_options:' + key]})
+                }
                 dtos.push({
                     fullName,
                     shortName: parentShortStr + obj[key],
-                    index: nextIndex()
+                    index: idx
                 })
             } else if (key === '_group') {
                 const data = { groupId: obj[key], groupName: params[obj[key]]._groupName, parent, start: dtos.length }
@@ -61,6 +70,7 @@ dtos.forEach(dto => {
     code += `constexpr int idx_${fullNameToVarName(dto.fullName)} = ${dto.index};\n`
     nameGetterCode += `    if (idx == ${dto.index}) return fullName ? "${dto.fullName}" : "${dto.shortName}";\n`
     const saveId = getSaveId(dto.fullName)
+    dto.saveId = saveId // saved for intermediate output
     if (saveIds.includes(saveId) ||
         params._reservedIds.some(x => x.id === saveId && x.name !== dto.fullName)) {
         throw `Save id conflict for param #${dto.index} '${dto.fullName}'! ` +
@@ -98,5 +108,30 @@ code += '\n'
 code += nameGetterCode
 
 code += '\n' + saveIdGetterCode
+
+if (paramsWithOptions.length > 0)
+{
+    code += '\nconstexpr int getNumberOfOptions(int index)\n{\n'
+    paramsWithOptions.forEach(x => {
+        code += `    if (index == ${x.index}) return ${x.options.length};\n`
+    })
+    code += '    return 0;\n}\n'
+
+    code += '\nconstexpr const char *getOptionLabel(int index, int selection)\n{\n'
+    
+    paramsWithOptions.forEach(x => {
+        code += `    if (index == ${x.index})\n    {\n`
+        x.options.forEach((y, optIdx) => {
+            code += `        if (selection == ${optIdx}) return "${y.replace(/\\/g, '\\\\')}";\n`
+        })
+        code += '    }\n'
+    })
+    code += '    return "ERROR";\n}\n'
+}
+
+if (saveIntermediate)
+{
+    fs.writeFileSync('params-intermediate.json', JSON.stringify({dtos, groupIds, paramsWithOptions}))    
+}
 
 fs.writeFileSync('params.h', code)

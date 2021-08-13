@@ -152,7 +152,7 @@ public:
             }
             else if (paramInGroup == idx_osc_1__fm_parameters__waveform)
             {
-                ops[opGroup].waveform = Util::getSelection(value, 4);
+                ops[opGroup].waveform = Util::getSelection(value, getNumberOfOptions(idx));
             }
             else if (paramInGroup == idx_osc_1__modulation_routing__route_to_output)
             {
@@ -183,7 +183,7 @@ public:
         {
             if (idx == idx_filter_type)
             {
-                filterType = Util::getSelection(value, 3);
+                filterType = Util::getSelection(value, getNumberOfOptions(idx));
             }
             else
             {
@@ -211,7 +211,7 @@ public:
                 fixedOsc = -1;
                 updatePhaseIncForOperator(f);
             }
-            fixedOsc = Util::getSelection(value, 5) - 1;
+            fixedOsc = Util::getSelection(value, getNumberOfOptions(idx)) - 1;
             if (fixedOsc != -1)
                 updatePhaseIncForOperator(fixedOsc);
         }
