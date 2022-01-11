@@ -1,0 +1,3 @@
+[submodule "fst-extension"]
+	path = fst-extension
+	url = https://github.com/biocommando/fst-extension.git

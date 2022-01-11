@@ -98,7 +98,7 @@ bool FmSynthGui::open(void *ptr)
     xframe->addView(presetActionList);
 
     ADD_TEXT("v " VERSION_STRING " build " BUILD_DATE, 12, 13.25, 4 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
-    ADD_TEXT("(c) 2021 Joonas Salonpaa", 12, 13.5, 4 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
+    ADD_TEXT("(c) 2022 Joonas Salonpaa", 12, 13.5, 4 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
     ADD_TEXT("github.com/biocommando/FmSynth", 12, 13.75, 4 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
 
     /*auto logoBmp = loadBitmap("TranSynLogo.bmp");
@@ -109,7 +109,7 @@ bool FmSynthGui::open(void *ptr)
         xframe->addView(logo);*/
 
     knobBackground->forget();
-    //logoBmp->forget();
+    logoBmp->forget();
 
     frame = xframe;
 

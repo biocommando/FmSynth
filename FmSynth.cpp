@@ -25,6 +25,7 @@ AudioEffect *createEffectInstance(audioMasterCallback audioMaster)
 FmSynth::FmSynth(audioMasterCallback audioMaster)
     : AudioEffectX(audioMaster, 0, total_number_of_parameters), presetManager(parameters)
 {
+    hasEditor();
     setNumInputs(2);        // stereo in
     setNumOutputs(2);       // stereo out
     setUniqueID(670839338); // identify
@@ -209,7 +210,7 @@ bool FmSynth::getProductString(char *text)
 }
 bool FmSynth::getVendorString(char *text)
 {
-    strcpy_s(text, 64, "(c) 2021 Joonas Salonpaa");
+    strcpy_s(text, 64, "(c) 2022 Joonas Salonpaa");
     return true;
 }
 
@@ -223,7 +224,7 @@ VstInt32 FmSynth::processEvents(VstEvents *events)
             continue;
         }
         VstMidiEvent *midievent = (VstMidiEvent *)(events->events[i]);
-        const char *midiMessage = midievent->midiData;
+        const unsigned char *midiMessage = midievent->midiData;
         if ((midiMessage[0] & 0xF0) == 0b10000000)
         {
             // Note off, key = midievent->midiData[1]
