@@ -13,6 +13,7 @@ class FmSynthGui : public AEffGUIEditor, public CControlListener
     std::vector<Knob *> knobs;
     COptionMenu *presetList = nullptr;
     COptionMenu *presetActionList = nullptr;
+    COptionMenu *macroList = nullptr;
     CBitmap *knobBackground = nullptr;
     CTextEdit *currentPresetNameEdit = nullptr;
     Integer0To100Formatter defaultFormatter;

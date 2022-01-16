@@ -11,7 +11,7 @@ std::ofstream *getLogger()
     static std::ofstream file;
     if (!initDone)
     {
-        file.open("D:\\old pc\\Documents\\Visual Studio 2013\\Projects\\FmSynth\\log.txt");
+        file.open("D:\\code\\c\\FmSynth\\log.txt");
         initDone = true;
     }
     return &file;
@@ -166,6 +166,10 @@ void FmSynth::setParameter(VstInt32 index, float value)
     {
         parameters[index].value = value;
         updateParameters(index);
+        if (editor)
+        {
+            ((FmSynthGui *)editor)->setParameter(index, value);
+        }
     }
 }
 

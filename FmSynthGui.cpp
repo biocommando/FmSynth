@@ -1,12 +1,34 @@
 #include "FmSynthGui.h"
+#include "PluginExecutor.h"
+#include <fstream>
+#include <map>
+
+extern std::ofstream *getLogger();
 
 CColor frontColor = {63, 72, 204, 255};
 CColor menuBgColor = {11, 11, 11, 255};
 
 constexpr int tagPresetList = 102;
 constexpr int tagPresetActionList = 103;
+constexpr int tagMacroList = 104;
 constexpr int tagParam = 202;
 constexpr int tagPresetNameEdit = 301;
+
+std::map<std::string, std::vector<std::string>> readMacros()
+{
+    std::map<std::string, std::vector<std::string>> macros;
+    const auto dir = Util::getWorkDir();
+    const auto file = dir + "\\plugins\\plugin_list.txt";
+    std::ifstream ifs;
+    ifs.open(file);
+    for (std::string s; std::getline(ifs, s);)
+    {
+        const auto v = Util::splitString(s, ';');
+        if (v.size() >= 2)
+            macros[v[0]] = v;
+    }
+    return macros;
+}
 
 bool FmSynthGui::open(void *ptr)
 {
@@ -97,6 +119,16 @@ bool FmSynthGui::open(void *ptr)
     presetActionList->addEntry(new CMenuItem("Save preset as new"));
     xframe->addView(presetActionList);
 
+    CRect macroRect (LEFT_MARGIN, 10, 4 * GRID_SIZE, 10 + TEXT_H);
+    macroList = new COptionMenu(macroRect, this, tagMacroList);
+    setColors(macroList);
+    macroList->addEntry(new CMenuItem("Macros...", 1 << 1));
+    for (const auto &macro : readMacros())
+    {
+        macroList->addEntry(new CMenuItem(macro.first.c_str()));
+    }
+    xframe->addView(macroList);
+
     ADD_TEXT("v " VERSION_STRING " build " BUILD_DATE, 12, 13.25, 4 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
     ADD_TEXT("(c) 2022 Joonas Salonpaa", 12, 13.5, 4 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
     ADD_TEXT("github.com/biocommando/FmSynth", 12, 13.75, 4 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
@@ -153,6 +185,23 @@ void FmSynthGui::valueChanged(CControl *control)
 
             presetList->addEntry(new CMenuItem(currentPresetName.c_str()));
         }
+    }
+    else if (tag == tagMacroList)
+    {
+        const auto action = macroList->getCurrentIndex();
+        const auto title = macroList->getEntry(action)->getTitle();
+        macroList->setCurrent(0);
+        auto macros = readMacros();
+        const auto &pluginDef = macros[title];
+        std::map<std::string, double> extraParams;
+        for (int i = 2; i < pluginDef.size(); i++)
+        {
+            const auto kv = Util::splitString(pluginDef[i], '=');
+            if (kv.size() == 2)
+                extraParams[kv[0]] = std::stod(kv[1]);
+        }
+        PluginExecutor executor(Util::getWorkDir() + "\\plugins\\" + pluginDef[1], synth());
+        executor.execute(extraParams);
     }
     else if (tag == tagParam)
     {

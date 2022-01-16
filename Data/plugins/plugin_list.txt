@@ -1,0 +1,2 @@
+[&C]ycle through algos;fm_algos.exe;route_amount=0.33;cycle_dir=1
+Cycle through algos ([&b]ackwards);fm_algos.exe;route_amount=0.33;cycle_dir=-1
