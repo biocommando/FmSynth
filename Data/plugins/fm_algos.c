@@ -1,4 +1,4 @@
-#define LOGGING
+// #define LOGGING
 //#define LOG_LEVEL LOG_LEVEL_TRACE
 #include "fmsynth.h"
 #include "static_keyval_map.h"

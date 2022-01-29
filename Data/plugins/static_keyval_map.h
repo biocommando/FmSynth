@@ -41,8 +41,8 @@ double static_kv_map_get(const char *key, STATIC_KV_MAP *map)
         if (!strcmp(key, map->keys[i]))
             return map->values[i];
     }
-    if (static_kv_map_set(key, 0, map))
-        return static_kv_map_get(key, map);
+    static_kv_map_set(key, 0, map);
+    // The initial value is 0 so it can be returned without reading from map
     return 0;
 }
 
