@@ -10,6 +10,7 @@ constexpr int lookupTableSize = 8192;
 
 class FmOperator
 {
+public:
     static inline float calcSin(float phase)
     {
         static float lookup[lookupTableSize];
@@ -31,7 +32,6 @@ class FmOperator
         return lookup[pos];
     }
 
-public:
     float value = 0;
     float phase = 0;
     float phaseInc = 0;
@@ -71,12 +71,31 @@ public:
     }
 };
 
+class LfoOsc
+{
+public:
+    float freq = 0;
+    float phase = 0;
+    float phaseInc = 0;
+
+    float process()
+    {
+        phase += phaseInc;
+        if (phase >= pi)
+        {
+            phase -= pi * 2;
+        }
+        return FmOperator::calcSin(phase);
+    }
+};
+
 class FmVoice
 {
     std::vector<FmOperator> ops;
     std::vector<AdsrEnvelope> env;
     std::vector<Filter> filters;
     float outputVol[4] = {0, 0, 0, 0};
+    float lfoRouting[4] = {0, 0, 0, 0};
     float ratios[2][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}};
     float freq;
     float sampleRate;
@@ -88,10 +107,16 @@ class FmVoice
 
     DcFilter dcBlock;
     Filter downSamplingFilter;
+    LfoOsc lfo;
+
+    float freqToPhaseInc(float freqHz)
+    {
+        return freqHz / (sampleRate / 2) * pi;
+    }
 
     float calculatePhaseInc(float note)
     {
-        return pow(2, note / 12) * 16.352 / (sampleRate / 2) * pi;
+        return freqToPhaseInc(powf(2, note / 12) * 16.352f);
     }
 
     void updatePhaseIncForOperator(int op)
@@ -107,12 +132,17 @@ class FmVoice
     {
         bool ended = true;
         *output = 0;
+
+        const auto lfoVal = lfo.process();
         for (int i = 0; i < 4; i++)
         {
             float fm = 0;
             for (int j = 0; j < 4; j++)
             {
-                fm += ops[j].value * ops[i].mods[j];
+                const auto opv = ops[j].value;
+                const auto lfoAmt = lfoVal * lfoRouting[j];
+                const auto opFm = opv * (1 - lfoAmt);
+                fm += opFm * ops[i].mods[j];
             }
             env[i].calculateNext();
             ops[i].process(fm, env[i].getEnvelope());
@@ -219,6 +249,10 @@ public:
             {
                 env[opGroup].setRelease(sampleRate * 4 * value);
             }
+            else if (paramInGroup == idx_osc_1__modulation_routing__lfo_to_amplitude)
+            {
+                lfoRouting[opGroup] = value;
+            }
         }
         else if (idx == idx_filter_type || idx == idx_filter)
         {
@@ -255,6 +289,10 @@ public:
             fixedOsc = Util::getSelection(value, getNumberOfOptions(idx)) - 1;
             if (fixedOsc != -1)
                 updatePhaseIncForOperator(fixedOsc);
+        }
+        else if (idx == idx_lfo_rate)
+        {
+            lfo.phaseInc = freqToPhaseInc((value * value + 0.01) * 5);
         }
     }
 

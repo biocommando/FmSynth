@@ -70,6 +70,14 @@
         "sstream": "cpp",
         "cinttypes": "cpp",
         "iostream": "cpp",
-        "functional": "cpp"
+        "functional": "cpp",
+        "bit": "cpp",
+        "charconv": "cpp",
+        "compare": "cpp",
+        "concepts": "cpp",
+        "format": "cpp",
+        "forward_list": "cpp",
+        "iomanip": "cpp",
+        "stop_token": "cpp"
     }
 }

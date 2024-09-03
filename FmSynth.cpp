@@ -83,7 +83,20 @@ VstInt32 FmSynth::setChunk(void *data, VstInt32 byteSize, bool isPreset)
     for (int i = 0; i < dtos.size(); i++)
     {
         const auto dto = &dtos[i];
-        if (dto->id == reserved_id_version || dto->id == reserved_id_build_date)
+        if (dto->id == reserved_id_version)
+        {
+            int combined, major = 1, minor = 1;
+            versionConvert(&combined, &major, &minor);
+            if (dto->iValue < combined)
+            {
+                parameters[idx_lfo_rate].value = 0;
+                parameters[idx_osc_1__modulation_routing__lfo_to_amplitude].value = 0;
+                parameters[idx_osc_2__modulation_routing__lfo_to_amplitude].value = 0;
+                parameters[idx_osc_3__modulation_routing__lfo_to_amplitude].value = 0;
+                parameters[idx_osc_4__modulation_routing__lfo_to_amplitude].value = 0;
+            }
+        }
+        else if (dto->id == reserved_id_build_date)
         {
             // reserved ids, pass
         }
@@ -125,12 +138,12 @@ void FmSynth::updateParameters(int num)
         {
             for (int j = 0; j < parameters.size(); j++)
             {
-                voices[i].updateParameter(parameters[j].index, parameters[j].value);
+                voices[i].updateParameter(parameters[j].getIndex(), parameters[j].value);
             }
         }
         else
         {
-            voices[i].updateParameter(parameters[num].index, parameters[num].value);
+            voices[i].updateParameter(parameters[num].getIndex(), parameters[num].value);
         }
     }
     voicesLock.unlock();
@@ -177,7 +190,7 @@ void FmSynth::getParameterName(VstInt32 index, char *label)
 {
     if (validParameter(index))
     {
-        strcpy(label, getNameForParam(parameters[index].index, false));
+        strcpy(label, getNameForParam(parameters[index].getIndex(), false));
     }
     else
     {

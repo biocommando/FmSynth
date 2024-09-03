@@ -4,8 +4,8 @@ node build-info.js
 g++ -c AdsrEnvelope.cpp EnvelopeStage.cpp -Ofast || exit /b
 
 set flags=-DVST_COMPAT -DWIN32 -DWINDOWS -DUNICODE -DWINDOWS_GUI
-g++ -c fst-extension/VSTGui/*.cpp -I"fst-extension/src/" %flags% -trigraphs || exit /b
-g++ -c fst-extension/src/FstAudioEffect.cpp -I"fst-extension/VSTGui/" -I"fst-extension/src/" %flags% || exit /b
+rem g++ -c fst-extension/VSTGui/*.cpp -I"fst-extension/src/" %flags% -trigraphs || exit /b
+rem g++ -c fst-extension/src/FstAudioEffect.cpp -I"fst-extension/VSTGui/" -I"fst-extension/src/" %flags% || exit /b
 
 g++ -c PresetManager.cpp -Ofast || exit /b
 g++ -c FmSynthGui.cpp -I"fst-extension/VSTGui/" -I"fst-extension/src/" %flags% || exit /b

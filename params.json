@@ -1,5 +1,5 @@
 {
-    "_pluginVersion": [1, 0],
+    "_pluginVersion": [1, 1],
     "_env": {
         "_groupName": "envelope",
         "attack": "A",
@@ -13,7 +13,8 @@
         "route to osc1": "o1",
         "route to osc2": "o2",
         "route to osc3": "o3",
-        "route to osc4": "o4"
+        "route to osc4": "o4",
+        "lfo to amplitude": "lfo"
     },
     "_fm": {
         "_groupName": "fm parameters",
@@ -64,6 +65,7 @@
     "filter" : "filter",
     "fix osc": "fixosc",
     "_options:fix osc": ["none", "osc 1", "osc 2", "osc 3", "osc 4"],
+    "lfo rate": "lfofreq",
     "_reservedIds": [
         { "id": 0, "name": "version"},
         { "id": 1, "name": "build date"},

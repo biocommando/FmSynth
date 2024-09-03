@@ -2,11 +2,16 @@ const fs = require('fs')
 
 const version = require('./params.json')._pluginVersion
 
+const date = new Date().toISOString();
+
+const [datePart, timePart] = date.split('T')
+const [h, min] = timePart.split(':')
+
 fs.writeFileSync('build.h', 
 `// This file is generated
 #pragma once
 
-#define BUILD_DATE "${new Date().toISOString()}"
+#define BUILD_DATE "${datePart}-${h}:${min}"
 
 #define VERSION_STRING "${version.join('.')}"
 constexpr int VERSION_MAJOR = ${version[0]};

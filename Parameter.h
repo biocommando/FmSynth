@@ -4,9 +4,9 @@
 
 class Parameter
 {
+    int index;
 public:
     float value;
-    int index;
 
     Parameter(int index, float value = 0) : value(value), index(index) {}
 
@@ -15,4 +15,6 @@ public:
     const char *getFullName() { return getNameForParam(index, true); }
 
     int getId() { return getSaveIdForParam(index); }
+
+    int getIndex() const { return index; }
 };

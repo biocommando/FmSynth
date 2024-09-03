@@ -14,6 +14,8 @@ constexpr int tagMacroList = 104;
 constexpr int tagParam = 202;
 constexpr int tagPresetNameEdit = 301;
 
+constexpr int n_osc_params = group_oscillator_length;
+
 std::map<std::string, std::vector<std::string>> readMacros()
 {
     std::map<std::string, std::vector<std::string>> macros;
@@ -32,7 +34,7 @@ std::map<std::string, std::vector<std::string>> readMacros()
 
 bool FmSynthGui::open(void *ptr)
 {
-    CRect frameSize(0, 0, GRID_X(16) + LEFT_MARGIN, GRID_Y(14));
+    CRect frameSize(0, 0, GRID_X(16) + LEFT_MARGIN, GRID_Y(15));
     CColor cBg = kBlackCColor, cFg = frontColor;
     ERect *wSize;
     getRect(&wSize);
@@ -75,29 +77,31 @@ bool FmSynthGui::open(void *ptr)
         addKnob(xframe, 3 + cursX, cursY, id, tagParam);
 
         cursY++;
-        if (cursY == 13)
+        if (cursY == n_osc_params)
         {
             cursY = 0;
             cursX += 4;
         }
     }
 
-    ADD_TEXT(getNameForParam(idx_filter, true), 6, 13.35, GRID_SIZE, TEXT_H, );
-    addKnob(xframe, 7, 13, idx_filter, tagParam);
-    ADD_TEXT(getNameForParam(idx_filter_type, true), 8, 13.35, GRID_SIZE, TEXT_H, );
-    addKnob(xframe, 9, 13, idx_filter_type, tagParam);
-    ADD_TEXT(getNameForParam(idx_fix_osc, true), 10, 13.35, GRID_SIZE, TEXT_H, );
-    addKnob(xframe, 11, 13, idx_fix_osc, tagParam);
+    ADD_TEXT(getNameForParam(idx_filter, true), 6, n_osc_params + .35, GRID_SIZE, TEXT_H, );
+    addKnob(xframe, 7, n_osc_params, idx_filter, tagParam);
+    ADD_TEXT(getNameForParam(idx_filter_type, true), 8, n_osc_params + .35, GRID_SIZE, TEXT_H, );
+    addKnob(xframe, 9, n_osc_params, idx_filter_type, tagParam);
+    ADD_TEXT(getNameForParam(idx_fix_osc, true), 10, n_osc_params + .35, GRID_SIZE, TEXT_H, );
+    addKnob(xframe, 11, n_osc_params, idx_fix_osc, tagParam);
+    ADD_TEXT(getNameForParam(idx_lfo_rate, true), 12, n_osc_params + .35, GRID_SIZE, TEXT_H, );
+    addKnob(xframe, 13, n_osc_params, idx_lfo_rate, tagParam);
 
-    GRID_RECT(presetNameEditRect, 0, 13, GRID_SIZE * 6, TEXT_H * 1.5);
+    GRID_RECT(presetNameEditRect, 0, n_osc_params, GRID_SIZE * 6, TEXT_H * 1.5);
     currentPresetNameEdit = new CTextEdit(presetNameEditRect, this, tagPresetNameEdit, currentPresetName.c_str());
     setColors(currentPresetNameEdit);
     currentPresetNameEdit->setBackColor(menuBgColor);
 
     xframe->addView(currentPresetNameEdit);
 
-    ADD_TEXT("Preset", 0, 13.5, GRID_SIZE * 1, TEXT_H, label->setHoriAlign(kLeftText));
-    GRID_RECT(presetRect, 1, 13.5, 2 * GRID_SIZE, TEXT_H);
+    ADD_TEXT("Preset", 0, n_osc_params + .5, GRID_SIZE * 1, TEXT_H, label->setHoriAlign(kLeftText));
+    GRID_RECT(presetRect, 1, n_osc_params + .5, 2 * GRID_SIZE, TEXT_H);
     presetList = new COptionMenu(presetRect, this, tagPresetList);
     setColors(presetList);
 
@@ -111,7 +115,7 @@ bool FmSynthGui::open(void *ptr)
 
     xframe->addView(presetList);
 
-    GRID_RECT(presetActRect, 3.5, 13.5, 2 * GRID_SIZE, TEXT_H);
+    GRID_RECT(presetActRect, 3.5, n_osc_params + .5, 2 * GRID_SIZE, TEXT_H);
     presetActionList = new COptionMenu(presetActRect, this, tagPresetActionList);
     setColors(presetActionList);
     presetActionList->addEntry(new CMenuItem("Preset actions...", 1 << 1));
@@ -129,9 +133,11 @@ bool FmSynthGui::open(void *ptr)
     }
     xframe->addView(macroList);
 
-    ADD_TEXT("v " VERSION_STRING " build " BUILD_DATE, 12, 13.25, 4 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
-    ADD_TEXT("(c) 2022 Joonas Salonpaa", 12, 13.5, 4 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
-    ADD_TEXT("github.com/biocommando/FmSynth", 12, 13.75, 4 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
+    ADD_TEXT("v " VERSION_STRING, 15, n_osc_params - .25, GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
+    ADD_TEXT("B " BUILD_DATE, 14, n_osc_params, 2 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
+    ADD_TEXT("(c) Joonas Salonpaa", 14, n_osc_params + .25, 2 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
+    ADD_TEXT("github.com/bio", 14, n_osc_params + .5, 2 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
+    ADD_TEXT("commando/FmSynth", 14, n_osc_params + .75, 2 * GRID_SIZE, TEXT_H, label->setHoriAlign(kRightText));
 
     /*auto logoBmp = loadBitmap("TranSynLogo.bmp");
 
